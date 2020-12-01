@@ -36,16 +36,20 @@ type OutputB = Integer
 ------------ PART A ------------
 partA :: Input -> OutputA
 partA xs = go (Set.fromList xs)
-  where go ys = Set.foldr' testMember Nothing ys
-          where testMember _ (Just v) = Just v
-                testMember x Nothing = let xc = (2020 - x)
-                                       in if Set.member xc ys
-                                          then Just $ x * xc
-                                          else Nothing
+  where
+    go ys = Set.foldr' testMember Nothing ys
+      where
+        testMember _ (Just v) = Just v
+        testMember x Nothing = let xc = (2020 - x)
+                               in if Set.member xc ys
+                                  then Just $ x * xc
+                                  else Nothing
+
 
 
 ------------ PART B ------------
 partB :: Input -> OutputB
-partB xs = let combs = [(x, y, z) | x <- xs, y <- xs, z <- xs]
-               (a, b, c):_ = Data.List.filter (\(x, y, z) -> x + y + z == 2020) combs
-           in a * b * c
+partB xs =
+  let combs = [(x, y, z) | x <- xs, y <- xs, z <- xs]
+      (a, b, c):_ = Data.List.filter (\(x, y, z) -> x + y + z == 2020) combs
+  in a * b * c
