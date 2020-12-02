@@ -40,10 +40,11 @@ partA xs = go (Set.fromList xs)
     go ys = Set.foldr' testMember Nothing ys
       where
         testMember _ (Just v) = Just v
-        testMember x Nothing = let xc = (2020 - x)
-                               in if Set.member xc ys
-                                  then Just $ x * xc
-                                  else Nothing
+        testMember x Nothing =
+          let xc = (2020 - x)
+           in if Set.member xc ys
+                then Just $ x * xc
+                else Nothing
 
 
 
@@ -51,5 +52,5 @@ partA xs = go (Set.fromList xs)
 partB :: Input -> OutputB
 partB xs =
   let combs = [(x, y, z) | x <- xs, y <- xs, z <- xs]
-      (a, b, c):_ = Data.List.filter (\(x, y, z) -> x + y + z == 2020) combs
-  in a * b * c
+      (a, b, c) : _ = Data.List.filter (\(x, y, z) -> x + y + z == 2020) combs
+   in a * b * c
