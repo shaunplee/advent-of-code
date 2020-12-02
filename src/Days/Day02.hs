@@ -21,19 +21,43 @@ runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
 inputParser :: Parser Input
-inputParser = error "Not implemented yet!"
+inputParser = sepBy' password endOfLine
+
+password :: Parser Password
+password = do
+  mn <- decimal
+  char '-'
+  mx <- decimal
+  char ' '
+  chr <- anyChar
+  string ": "
+  pw <- many' letter
+  return ((mn, mx), chr, pw)
 
 ------------ TYPES ------------
-type Input = Void
+type Password = ((Int, Int), Char, String)
 
-type OutputA = Void
+type Input = [Password]
 
-type OutputB = Void
+type OutputA = Int
+
+type OutputB = Int
 
 ------------ PART A ------------
 partA :: Input -> OutputA
-partA = error "Not implemented yet!"
+partA pwds = length $ filter validPassword pwds
+
+validPassword :: Password -> Bool
+validPassword ((mn, mx), chr, pwd) =
+  let cnt = length $ filter (== chr) pwd
+   in (cnt >= mn) && (cnt <= mx)
 
 ------------ PART B ------------
 partB :: Input -> OutputB
-partB = error "Not implemented yet!"
+partB pwds = length $ filter validPasswordB pwds
+
+validPasswordB :: Password -> Bool
+validPasswordB ((pos1, pos2), chr, pwd) =
+  let p1 = (pwd !! (pos1 - 1)) == chr
+      p2 = (pwd !! (pos2 - 1)) == chr
+   in (p1 && not p2) || (p2 && not p1)
