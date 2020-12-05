@@ -17,7 +17,6 @@ import Data.Attoparsec.Text
     ( Parser, choice, many', sepBy', char, endOfLine )
 import Data.Void
 
-import Debug.Trace (trace)
 {- ORMOLU_ENABLE -}
 
 runDay :: Bool -> String -> IO ()
@@ -29,6 +28,7 @@ inputParser = sepBy' mapRow endOfLine
 
 mapRow :: Parser Row
 mapRow = fmap (Vec.fromList . map (== '#')) (many' (choice [char '.', char '#']))
+
 ------------ TYPES ------------
 type Input = [Row]
 
@@ -39,9 +39,6 @@ type OutputA = (Int, Int)
 type OutputB = Int
 
 ------------ PART A ------------
-testInput :: T.Text
-testInput = "..##.......\n#...#...#..\n.#....#..#.\n..#.#...#.#\n.#...##..#.\n..#.##.....\n.#.#.#....#\n.#........#\n#.##...#...\n#...##....#\n.#..#...#.#"
-
 partA :: Input -> OutputA
 partA rs =
   foldl'
@@ -52,24 +49,26 @@ partA rs =
     (0, 0)
     rs
   where
-    width = Vec.length (head rs)
+    width = length (head rs)
 
 ------------ PART B ------------
 partB :: Input -> OutputB
 partB rs = product [a, b, c, d, e]
-  where (_, a) = foldl' (checkRun 1) (0, 0) rs
-        (_, b) = foldl' (checkRun 3) (0, 0) rs
-        (_, c) = foldl' (checkRun 5) (0, 0) rs
-        (_, d) = foldl' (checkRun 7) (0, 0) rs
-        (_, e) = foldl' (checkRun 1) (0, 0) (everyOther rs)
+  where
+    (_, a) = foldl' (checkRun 1) (0, 0) rs
+    (_, b) = foldl' (checkRun 3) (0, 0) rs
+    (_, c) = foldl' (checkRun 5) (0, 0) rs
+    (_, d) = foldl' (checkRun 7) (0, 0) rs
+    (_, e) = foldl' (checkRun 1) (0, 0) (everyOther rs)
 
 checkRun :: Int -> (Int, Int) -> Row -> (Int, Int)
 checkRun runLength (pos, cnt) row =
   let newCnt = if row Vec.! pos then cnt + 1 else cnt
    in ((pos + runLength) `mod` width, newCnt)
-  where width = length row
+  where
+    width = length row
 
 everyOther :: [a] -> [a]
 everyOther [] = []
 everyOther [x] = [x]
-everyOther (x:_:xs) = x : everyOther xs
+everyOther (x : _ : xs) = x : everyOther xs
