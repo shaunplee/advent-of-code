@@ -21,19 +21,22 @@ runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
 inputParser :: Parser Input
-inputParser = error "Not implemented yet!"
+inputParser = sepBy1 travelGroup (count 2 space)
 
+travelGroup :: Parser TravelGroup
+travelGroup = sepBy1 (many1 letter) space
 ------------ TYPES ------------
-type Input = Void
+type Input = [TravelGroup]
+type TravelGroup = [String]
 
-type OutputA = Void
+type OutputA = Int
 
-type OutputB = Void
+type OutputB = Int
 
 ------------ PART A ------------
 partA :: Input -> OutputA
-partA = error "Not implemented yet!"
+partA = sum . map (length . Set.fromList . concat)
 
 ------------ PART B ------------
 partB :: Input -> OutputB
-partB = error "Not implemented yet!"
+partB = sum . map (length . foldr1 Set.intersection . map Set.fromList)
