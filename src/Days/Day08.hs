@@ -21,19 +21,87 @@ runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
 inputParser :: Parser Input
-inputParser = error "Not implemented yet!"
+inputParser = Vec.fromList <$> sepBy1 instruction (char '\n')
+
+instruction :: Parser Instruction
+instruction = do
+  opc <- opCode
+  space
+  arg <- signed decimal
+  return $ PI opc arg
+
+opCode :: Parser OpCode
+opCode = do
+  opc <- choice [string "acc", string "jmp", string "nop"]
+  return $
+    if
+        | opc == "acc" -> Acc
+        | opc == "jmp" -> Jmp
+        | opc == "nop" -> Nop
 
 ------------ TYPES ------------
-type Input = Void
+type Input = Program
 
-type OutputA = Void
+type Program = Vector Instruction
 
-type OutputB = Void
+data Instruction = PI OpCode Int
+  deriving (Show)
+
+data OpCode = Acc | Jmp | Nop
+  deriving (Eq, Show)
+
+data MachineState = MachineState {acc :: Int, pc :: Int}
+
+type OutputA = Int
+
+type OutputB = Int
 
 ------------ PART A ------------
 partA :: Input -> OutputA
-partA = error "Not implemented yet!"
+partA prog = go (MachineState 0 0) Set.empty
+  where
+    go ms@MachineState {..} executed =
+      if pc `Set.member` executed
+        then acc
+        else go (updateState ms) (Set.insert pc executed)
+    updateState :: MachineState -> MachineState
+    updateState MachineState {..} =
+      let (PI op arg) = prog Vec.! pc
+       in case op of
+            Acc -> MachineState (acc + arg) (pc + 1)
+            Jmp -> MachineState acc (pc + arg)
+            Nop -> MachineState acc (pc + 1)
 
 ------------ PART B ------------
 partB :: Input -> OutputB
-partB = error "Not implemented yet!"
+partB prog =
+  head $
+    mapMaybe test $
+      mapMaybe toggleOp $
+        zip
+          (replicate (length prog) prog)
+          [0 ..]
+
+toggleOp :: (Program, Int) -> Maybe Program
+toggleOp (prog, k) =
+  let (PI op arg) = prog Vec.! k
+   in case op of
+        Acc -> Nothing
+        Nop -> Just $ prog Vec.// [(k, PI Jmp arg)]
+        Jmp -> Just $ prog Vec.// [(k, PI Nop arg)]
+
+test :: Program -> Maybe Int
+test prog = go (MachineState 0 0) Set.empty
+  where
+    go ms@MachineState {..} executed =
+      if
+          | pc `Set.member` executed -> Nothing
+          | pc == length prog -> Just acc
+          | otherwise -> go (updateState ms) (Set.insert pc executed)
+    updateState :: MachineState -> MachineState
+    updateState MachineState {..} =
+      let (PI op arg) = prog Vec.! pc
+       in case op of
+            Acc -> MachineState (acc + arg) (pc + 1)
+            Jmp -> MachineState acc (pc + arg)
+            Nop -> MachineState acc (pc + 1)
