@@ -21,19 +21,41 @@ runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
 inputParser :: Parser Input
-inputParser = error "Not implemented yet!"
+inputParser = sepBy decimal (char '\n')
 
 ------------ TYPES ------------
-type Input = Void
+type Input = [Int]
 
-type OutputA = Void
+type OutputA = Int
 
-type OutputB = Void
+type OutputB = Maybe Int
 
 ------------ PART A ------------
-partA :: Input -> OutputA
-partA = error "Not implemented yet!"
+windowSize = 25
+
+partA :: Input -> Int
+partA = go . splitAt windowSize
+  where
+    go (_, []) = -1
+    go (pre, x : xs) = let pairs = [(a,b) | a <- pre, b <- tail pre, a /= b]
+                       in if all (\(a, b) -> a + b /= x) pairs
+                          then x
+                          else go (tail pre ++ [x], xs)
 
 ------------ PART B ------------
+overlappingChunksOf :: Int -> [a] -> [[a]]
+overlappingChunksOf k xs =
+  if k > length xs
+  then []
+  else Data.List.take k xs : overlappingChunksOf k (tail xs)
+
 partB :: Input -> OutputB
-partB = error "Not implemented yet!"
+partB input = foldr go Nothing [3 .. length input]
+  where
+    val = partA input
+    go _ (Just x) = Just x
+    go window Nothing = foldr go' Nothing (overlappingChunksOf window input)
+    go' _ (Just x) = Just x
+    go' chunk Nothing = if sum chunk == val
+      then Just (minimum chunk + maximum chunk)
+      else Nothing

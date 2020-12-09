@@ -33,11 +33,10 @@ instruction = do
 opCode :: Parser OpCode
 opCode = do
   opc <- choice [string "acc", string "jmp", string "nop"]
-  return $
-    if
-        | opc == "acc" -> Acc
-        | opc == "jmp" -> Jmp
-        | opc == "nop" -> Nop
+  return $ case opc of
+    "acc" -> Acc
+    "jmp" -> Jmp
+    "nop" -> Nop
 
 ------------ TYPES ------------
 type Input = Program
