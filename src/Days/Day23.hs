@@ -4,8 +4,8 @@ module Days.Day23 (runDay) where
 import Data.Bool (bool)
 import Data.Char (digitToInt)
 import Data.List
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
+import Data.IntMap.Strict (IntMap)
+import qualified Data.IntMap.Strict as Map
 import Data.Maybe
 import Data.Sequence (Seq, (><))
 import qualified Data.Sequence as Seq
@@ -24,10 +24,10 @@ runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
 inputParser :: Parser Input
-inputParser = Seq.fromList . map digitToInt <$> many1 digit
+inputParser = map digitToInt <$> many1 digit
 
 ------------ TYPES ------------
-type Input = Seq Int
+type Input = [Int]
 
 type OutputA = String
 
@@ -36,48 +36,42 @@ type OutputB = Int
 ------------ PART A ------------
 partA :: Input -> OutputA
 partA input =
-  let (_, cups) = iterate oneMove (Seq.index input 0, input) !! 100
-      Just oneIdx = Seq.elemIndexL 1 cups
-      (back, front) = Seq.splitAt oneIdx cups
-   in tail $ concatMap show (front >< back)
+  let initCups = Map.fromList $ zip input $ drop 1 (cycle input)
+      (_, cups) = iterate oneMove (head input, initCups) !! 100
+      result =
+        until
+          (\(x : xs) -> x == 1)
+          (\(x : xs) -> (cups Map.! x) : x : xs)
+          [cups Map.! 1]
+   in concatMap show (reverse $ tail result)
 
-oneMove :: (Int, Seq Int) -> (Int, Seq Int)
+oneMove :: (Int, IntMap Int) -> (Int, IntMap Int)
 oneMove (c, cups) =
-  let Just cPos = Seq.elemIndexL c cups
-      (before, move, after) = pickupCups cPos cups
-      nCups = before >< after
-      nextCup x =
-        let nx = if x == 1 then maximum nCups else x - 1
-         in case Seq.elemIndexL nx nCups of
-              Just dP -> dP
-              Nothing -> nextCup (x - 1)
-      dPos = nextCup c
-      (before', after') = Seq.splitAt (dPos + 1) nCups
-      cups' = before' >< move >< after'
-      Just ncPos = Seq.elemIndexL c cups'
-      newCurPos = if ncPos + 1 == length cups then 0 else ncPos + 1
-   in (Seq.index cups' newCurPos, cups')
+  let ((first, second, third), after) = pickupCups c cups
+      move = [first, second, third]
+      dest = destCup (c - 1)
+      destCup x
+        | x == 0 = destCup (maximum cups)
+        | x `elem` move = destCup (x - 1)
+        | otherwise = x
+      cupAfterDest = cups Map.! dest
+      newCups = foldl' (\cm (k, v) -> Map.insert k v cm) cups [(dest, first), (third, cupAfterDest), (c, after)]
+   in (newCups Map.! c, newCups)
 
-pickupCups :: Int -> Seq Int -> (Seq Int, Seq Int, Seq Int)
-pickupCups pos cups
-  | cupsAfter >= 3 =
-    let (before, next) = Seq.splitAt (pos + 1) cups
-        (move, rest) = Seq.splitAt 3 next
-     in (before, move, rest)
-  | cupsAfter < 3 =
-    let (before, fstMove) = Seq.splitAt (pos + 1) cups
-        (restMove, before') = Seq.splitAt (3 - cupsAfter) before
-     in (before', fstMove >< restMove, Seq.Empty)
-  | otherwise = error "pos is beyond range of cups"
-  where
-    lcups = length cups
-    cupsAfter = lcups - pos - 1
+pickupCups :: Int -> IntMap Int -> ((Int, Int, Int), Int)
+pickupCups curCup cups =
+  let first = cups Map.! curCup
+      second = cups Map.! first
+      third = cups Map.! second
+      fourth = cups Map.! third
+   in ((first, second, third), fourth)
 
 ------------ PART B ------------
 partB :: Input -> OutputB
 partB input =
-  let (_, cups) = iterate oneMove (Seq.index input 0, input >< Seq.fromList [10..1000000]) !! 10000000
-      Just oneIdx = Seq.elemIndexL 1 cups
-      x = Seq.index cups (oneIdx + 1)
-      y = Seq.index cups (oneIdx + 2)
+  let inputExt = input ++ [10..1000000]
+      initCups = Map.fromList $ zip inputExt $ drop 1 (cycle inputExt)
+      (_, cups) = iterate oneMove (head input, initCups) !! 10000000
+      x = cups Map.! 1
+      y = cups Map.! x
    in x * y
