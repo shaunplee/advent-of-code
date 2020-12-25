@@ -21,18 +21,33 @@ runDay = R.runDay inputParser partA partB
 
 ------------ PARSER ------------
 inputParser :: Parser Input
-inputParser = error "Not implemented yet!"
+inputParser = do
+  x <- decimal
+  _ <- char '\n'
+  y <- decimal
+  return (x, y)
 
 ------------ TYPES ------------
-type Input = Void
+type Input = (Int,Int)
 
-type OutputA = Void
+type OutputA = Int
 
 type OutputB = Void
 
 ------------ PART A ------------
 partA :: Input -> OutputA
-partA = error "Not implemented yet!"
+partA (cpk, dpk) = let cl = findLoopSize cpk
+                       dl = findLoopSize dpk
+                   in iterate (oneLoop dpk) 1 !! cl
+
+subjectNumberA :: Int
+subjectNumberA = 7
+
+oneLoop :: Int -> Int -> Int
+oneLoop subjectNumber v = (v * subjectNumber) `mod` 20201227
+
+findLoopSize :: Int -> Int
+findLoopSize pk = snd $ head $ dropWhile (\(x, _) -> x /= pk) (zip (iterate (oneLoop subjectNumberA) 1) [0..])
 
 ------------ PART B ------------
 partB :: Input -> OutputB
